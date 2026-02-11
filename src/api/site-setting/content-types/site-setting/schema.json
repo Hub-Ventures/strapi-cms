@@ -1,0 +1,34 @@
+{
+    "kind": "collectionType",
+    "collectionName": "site_settings",
+    "info": {
+        "singularName": "site-setting",
+        "pluralName": "site-settings",
+        "displayName": "Site Setting",
+        "description": "Global site settings"
+    },
+    "options": {
+        "draftAndPublish": false
+    },
+    "attributes": {
+        "key": {
+            "type": "string",
+            "required": true,
+            "unique": true,
+            "maxLength": 100
+        },
+        "value": {
+            "type": "text",
+            "required": true
+        },
+        "type": {
+            "type": "enumeration",
+            "enum": [
+                "text",
+                "image",
+                "html"
+            ],
+            "default": "text"
+        }
+    }
+}

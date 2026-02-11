@@ -1,0 +1,53 @@
+{
+    "kind": "collectionType",
+    "collectionName": "papers",
+    "info": {
+        "singularName": "paper",
+        "pluralName": "papers",
+        "displayName": "Paper",
+        "description": "Research papers and publications"
+    },
+    "options": {
+        "draftAndPublish": true
+    },
+    "attributes": {
+        "title": {
+            "type": "string",
+            "required": true,
+            "maxLength": 255
+        },
+        "slug": {
+            "type": "uid",
+            "targetField": "title",
+            "required": true
+        },
+        "excerpt": {
+            "type": "text",
+            "maxLength": 500
+        },
+        "content": {
+            "type": "richtext",
+            "required": true
+        },
+        "cover_image": {
+            "type": "media",
+            "multiple": false,
+            "allowedTypes": [
+                "images"
+            ]
+        },
+        "status": {
+            "type": "enumeration",
+            "enum": [
+                "draft",
+                "published"
+            ],
+            "default": "draft",
+            "required": true
+        },
+        "downloads": {
+            "type": "integer",
+            "default": 0
+        }
+    }
+}

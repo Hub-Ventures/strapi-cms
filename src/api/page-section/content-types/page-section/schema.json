@@ -1,0 +1,37 @@
+{
+    "kind": "collectionType",
+    "collectionName": "page_sections",
+    "info": {
+        "singularName": "page-section",
+        "pluralName": "page-sections",
+        "displayName": "Page Section",
+        "description": "Editable page sections"
+    },
+    "options": {
+        "draftAndPublish": false
+    },
+    "attributes": {
+        "page": {
+            "type": "string",
+            "required": true,
+            "maxLength": 100
+        },
+        "section": {
+            "type": "string",
+            "required": true,
+            "maxLength": 100
+        },
+        "content": {
+            "type": "json",
+            "required": true
+        },
+        "order": {
+            "type": "integer",
+            "default": 0
+        },
+        "active": {
+            "type": "boolean",
+            "default": true
+        }
+    }
+}
