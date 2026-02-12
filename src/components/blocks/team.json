@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_blocks_teams",
+  "info": {
+    "displayName": "Team",
+    "icon": "user",
+    "description": "Team members showcase section"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "members": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shared.team-member",
+      "min": 1
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": ["grid", "carousel", "list"],
+      "default": "grid"
+    }
+  }
+}

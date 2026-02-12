@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_blocks_spacers",
+  "info": {
+    "displayName": "Spacer",
+    "icon": "arrowDown",
+    "description": "Vertical spacing utility block"
+  },
+  "attributes": {
+    "height": {
+      "type": "enumeration",
+      "enum": ["small", "medium", "large", "extra-large"],
+      "default": "medium",
+      "required": true
+    }
+  }
+}

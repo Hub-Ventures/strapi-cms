@@ -1,0 +1,52 @@
+/* ─── Hiding Unwanted Widgets ───────────────────────────────────────────── */
+
+/* Hide Guided Tour Container (robust selector using :has) */
+/* Targets any div that contains the "Close guided tour" button */
+div:has(button[aria-label="Close guided tour"]),
+/* Fallback for older browsers or if structure changes (based on inspection classes) */
+[data-strapi-guided-tour-container],
+#guided-tour-modal,
+.guided-tour {
+  display: none !important;
+}
+
+/* Hide "Join the community" links */
+a[href*="https://strapi.io/discord"],
+a[href*="https://feedback.strapi.io"] {
+  display: none !important;
+}
+
+/* ─── Branding Override (CSS Hack for persistent text) ───────────────────── */
+
+/* Override "Hello {user}" with "Bienvenido a El Hub" */
+main h1 {
+  visibility: hidden;
+  position: relative;
+  width: auto;
+  height: auto;
+}
+main h1::after {
+  visibility: visible;
+  content: "Bienvenido a El Hub";
+  position: absolute;
+  top: 0; left: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  white-space: nowrap;
+}
+
+/* Override "Welcome to your administration panel" */
+main h1 + p {
+  visibility: hidden;
+  position: relative;
+}
+main h1 + p::after {
+  visibility: visible;
+  content: "Panel de Administración CMS";
+  position: absolute;
+  top: 0; left: 0;
+  font-size: inherit;
+  color: inherit;
+  white-space: nowrap;
+}

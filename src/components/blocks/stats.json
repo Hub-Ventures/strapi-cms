@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_blocks_stats",
+  "info": {
+    "displayName": "Stats",
+    "icon": "chartBubble",
+    "description": "Statistics showcase section"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "statistics": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shared.stat-item",
+      "min": 1
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": ["horizontal", "vertical", "card"],
+      "default": "horizontal"
+    }
+  }
+}
