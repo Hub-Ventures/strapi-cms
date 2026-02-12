@@ -1,0 +1,30 @@
+{
+  "collectionName": "components_blocks_image_grids",
+  "info": {
+    "displayName": "Image Grid",
+    "icon": "picture",
+    "description": "Multi-image gallery section"
+  },
+  "attributes": {
+    "images": {
+      "type": "media",
+      "allowedTypes": ["images"],
+      "multiple": true,
+      "required": true
+    },
+    "columns": {
+      "type": "enumeration",
+      "enum": ["2", "3", "4"],
+      "default": "3"
+    },
+    "caption": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": ["grid", "masonry", "carousel"],
+      "default": "grid"
+    }
+  }
+}

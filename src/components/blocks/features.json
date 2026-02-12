@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_blocks_features",
+  "info": {
+    "displayName": "Features",
+    "icon": "star",
+    "description": "Feature highlights section"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "subtitle": {
+      "type": "text"
+    },
+    "items": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shared.feature-item",
+      "min": 1
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": ["grid", "list", "alternating"],
+      "default": "grid"
+    }
+  }
+}

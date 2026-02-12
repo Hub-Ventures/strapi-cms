@@ -1,0 +1,41 @@
+{
+  "collectionName": "components_blocks_heroes",
+  "info": {
+    "displayName": "Hero",
+    "icon": "landscape",
+    "description": "Hero banner section with call-to-action"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "maxLength": 150
+    },
+    "subtitle": {
+      "type": "text"
+    },
+    "background_image": {
+      "type": "media",
+      "allowedTypes": ["images"],
+      "multiple": false
+    },
+    "cta_text": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "cta_url": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": ["centered", "split", "image-left", "image-right"],
+      "default": "centered"
+    },
+    "alignment": {
+      "type": "enumeration",
+      "enum": ["left", "center", "right"],
+      "default": "center"
+    }
+  }
+}

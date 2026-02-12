@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_shared_footer_columns",
+  "info": {
+    "displayName": "Footer Column",
+    "icon": "layout",
+    "description": "A column of links for multi-column footers"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "links": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shared.nav-item"
+    }
+  }
+}

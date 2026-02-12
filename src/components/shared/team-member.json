@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_shared_team_members",
+  "info": {
+    "displayName": "Team Member",
+    "icon": "user",
+    "description": "Individual team member profile for team blocks"
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "maxLength": 100
+    },
+    "role": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "photo": {
+      "type": "media",
+      "allowedTypes": ["images"],
+      "multiple": false
+    },
+    "linkedin": {
+      "type": "string",
+      "maxLength": 255
+    }
+  }
+}

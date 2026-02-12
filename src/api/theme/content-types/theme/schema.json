@@ -1,0 +1,89 @@
+{
+  "kind": "collectionType",
+  "collectionName": "themes",
+  "info": {
+    "singularName": "theme",
+    "pluralName": "themes",
+    "displayName": "Theme",
+    "description": "Reusable design token configurations for site styling"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "content-manager": {
+      "visible": false
+    }
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "maxLength": 110,
+      "required": true,
+      "unique": true
+    },
+    "primary_color": {
+      "type": "string",
+      "default": "#0e172a",
+      "maxLength": 20
+    },
+    "secondary_color": {
+      "type": "string",
+      "default": "#64748b",
+      "maxLength": 20
+    },
+    "accent_color": {
+      "type": "string",
+      "default": "#f59e0b",
+      "maxLength": 20
+    },
+    "font_heading": {
+      "type": "string",
+      "default": "Inter",
+      "maxLength": 100
+    },
+    "font_body": {
+      "type": "string",
+      "default": "Inter",
+      "maxLength": 100
+    },
+    "border_radius": {
+      "type": "enumeration",
+      "default": "medium",
+      "enum": [
+        "none",
+        "small",
+        "medium",
+        "large"
+      ]
+    },
+    "spacing": {
+      "type": "enumeration",
+      "default": "normal",
+      "enum": [
+        "compact",
+        "normal",
+        "relaxed"
+      ]
+    },
+    "logo": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "favicon": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "fotter": {
+      "type": "customField",
+      "customField": "plugin::color-picker.color",
+      "regex": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+    }
+  }
+}

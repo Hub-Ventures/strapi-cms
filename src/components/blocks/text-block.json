@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_blocks_text_blocks",
+  "info": {
+    "displayName": "Text Block",
+    "icon": "feather",
+    "description": "Rich text content section"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "maxLength": 150
+    },
+    "content": {
+      "type": "richtext",
+      "required": true
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": ["simple", "with-title", "two-columns"],
+      "default": "simple"
+    },
+    "alignment": {
+      "type": "enumeration",
+      "enum": ["left", "center", "right"],
+      "default": "left"
+    }
+  }
+}

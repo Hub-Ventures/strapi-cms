@@ -1,0 +1,49 @@
+{
+  "kind": "collectionType",
+  "collectionName": "navbars",
+  "info": {
+    "singularName": "navbar",
+    "pluralName": "navbars",
+    "displayName": "Navbar",
+    "description": "Reusable navigation bar configurations shared across pages"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "content-manager": {
+      "visible": false
+    }
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "maxLength": 100
+    },
+    "logo": {
+      "type": "media",
+      "allowedTypes": ["images"],
+      "multiple": false
+    },
+    "items": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shared.nav-item"
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": ["standard", "centered", "minimal", "transparent"],
+      "default": "standard"
+    },
+    "cta_text": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "cta_url": {
+      "type": "string",
+      "maxLength": 255
+    }
+  }
+}

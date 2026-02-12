@@ -1,0 +1,35 @@
+{
+  "collectionName": "components_blocks_footers",
+  "info": {
+    "displayName": "Footer",
+    "icon": "apps",
+    "description": "Page footer section with social links"
+  },
+  "attributes": {
+    "copyright": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "social_facebook": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "social_instagram": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "social_twitter": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "social_linkedin": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": ["simple", "columns", "minimal"],
+      "default": "simple"
+    }
+  }
+}
