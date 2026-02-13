@@ -1,6 +1,112 @@
 // import QuickActions from './extensions/components/QuickActions';
 import type { StrapiApp } from '@strapi/strapi/admin';
 
+const COLLECTION_TYPE_PRIORITY: Record<string, number> = {
+  'api::page.page': 0,
+  'api::folder.folder': 1,
+  'api::client.client': 2,
+};
+const DEFAULT_COLLECTION_TYPE_UID = 'api::page.page';
+const INITIAL_CM_REDIRECT_KEY = 'elhub.cm.initial-redirect.done';
+
+function extractCollectionTypeUidFromHref(href: string): string | null {
+  const marker = '/content-manager/collection-types/';
+  const start = href.indexOf(marker);
+  if (start === -1) return null;
+
+  const tail = href.slice(start + marker.length);
+  const uid = tail.split(/[/?#]/)[0];
+  return uid || null;
+}
+
+function reorderContentManagerCollectionTypes(): void {
+  const links = Array.from(
+    document.querySelectorAll<HTMLAnchorElement>('nav a[href*="/content-manager/collection-types/"]')
+  );
+
+  if (links.length < 2) return;
+
+  const groups = new Map<
+    HTMLElement,
+    Array<{ item: HTMLElement; uid: string; text: string; originalIndex: number }>
+  >();
+
+  links.forEach((link, index) => {
+    const uid = extractCollectionTypeUidFromHref(link.href);
+    if (!uid) return;
+
+    const item = (link.closest('li') as HTMLElement | null) ?? link.parentElement;
+    const parent = item?.parentElement;
+    if (!item || !parent) return;
+
+    if (!groups.has(parent)) {
+      groups.set(parent, []);
+    }
+
+    const entries = groups.get(parent)!;
+    if (entries.some((entry) => entry.item === item)) return;
+
+    entries.push({
+      item,
+      uid,
+      text: (link.textContent || '').trim().toLowerCase(),
+      originalIndex: index,
+    });
+  });
+
+  groups.forEach((entries, parent) => {
+    if (entries.length < 2) return;
+
+    const sorted = [...entries].sort((a, b) => {
+      const rankA = COLLECTION_TYPE_PRIORITY[a.uid] ?? Number.MAX_SAFE_INTEGER;
+      const rankB = COLLECTION_TYPE_PRIORITY[b.uid] ?? Number.MAX_SAFE_INTEGER;
+
+      if (rankA !== rankB) return rankA - rankB;
+
+      const byText = a.text.localeCompare(b.text);
+      if (byText !== 0) return byText;
+
+      return a.originalIndex - b.originalIndex;
+    });
+
+    const changed = sorted.some((entry, idx) => entry.item !== entries[idx]?.item);
+    if (!changed) return;
+
+    sorted.forEach((entry) => parent.appendChild(entry.item));
+  });
+}
+
+function normalizePathname(pathname: string): string {
+  if (!pathname) return '/';
+  const normalized = pathname.replace(/\/+$/, '');
+  return normalized || '/';
+}
+
+function ensureDefaultContentManagerEntry(): void {
+  const currentPath = normalizePathname(window.location.pathname);
+  const marker = '/content-manager';
+  const markerIndex = currentPath.indexOf(marker);
+  if (markerIndex === -1) return;
+
+  const adminPrefix = currentPath.slice(0, markerIndex);
+  const contentManagerRoot = `${adminPrefix}${marker}`;
+  const defaultCollectionPath = `${contentManagerRoot}/collection-types/${DEFAULT_COLLECTION_TYPE_UID}`;
+  const clientCollectionPath = `${contentManagerRoot}/collection-types/api::client.client`;
+
+  if (currentPath === contentManagerRoot && currentPath !== defaultCollectionPath) {
+    window.location.replace(defaultCollectionPath);
+    return;
+  }
+
+  if (currentPath === clientCollectionPath) {
+    const alreadyRedirected = sessionStorage.getItem(INITIAL_CM_REDIRECT_KEY) === '1';
+    if (!alreadyRedirected) {
+      sessionStorage.setItem(INITIAL_CM_REDIRECT_KEY, '1');
+      window.location.replace(defaultCollectionPath);
+    }
+  }
+}
+
 export default {
   config: {
     // ... config
@@ -109,9 +215,15 @@ export default {
              sub.textContent = 'Panel de Administración CMS';
           }
         }
+
+        // 5. Keep Content Manager collection types in a fixed business-first order.
+        reorderContentManagerCollectionTypes();
+        ensureDefaultContentManagerEntry();
       });
 
       observer.observe(document.body, { childList: true, subtree: true });
+      reorderContentManagerCollectionTypes();
+      ensureDefaultContentManagerEntry();
     } catch (e) {
       console.error('El Hub customization error:', e);
     }

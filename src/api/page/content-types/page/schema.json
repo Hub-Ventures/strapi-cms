@@ -16,6 +16,10 @@
       "required": true,
       "maxLength": 200
     },
+    "api_url": {
+      "type": "text",
+      "required": false
+    },
     "slug": {
       "type": "uid",
       "targetField": "title",
@@ -25,9 +29,32 @@
       "type": "boolean",
       "default": false
     },
-    "seo": {
-      "type": "component",
-      "component": "shared.seo"
+    "blocks": {
+      "type": "dynamiczone",
+      "components": [
+        "blocks.hero",
+        "blocks.text-block",
+        "blocks.cta",
+        "blocks.image-grid",
+        "blocks.faq",
+        "blocks.team",
+        "blocks.stats",
+        "blocks.features",
+        "blocks.footer",
+        "blocks.spacer"
+      ]
+    },
+    "client": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::client.client",
+      "inversedBy": "pages"
+    },
+    "folder": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::folder.folder",
+      "inversedBy": "pages"
     },
     "navbar": {
       "type": "relation",
@@ -44,20 +71,9 @@
       "relation": "manyToOne",
       "target": "api::theme.theme"
     },
-    "blocks": {
-      "type": "dynamiczone",
-      "components": [
-        "blocks.hero",
-        "blocks.text-block",
-        "blocks.cta",
-        "blocks.image-grid",
-        "blocks.faq",
-        "blocks.team",
-        "blocks.stats",
-        "blocks.features",
-        "blocks.footer",
-        "blocks.spacer"
-      ]
+    "seo": {
+      "type": "component",
+      "component": "shared.seo"
     }
   }
 }
