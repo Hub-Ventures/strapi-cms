@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "clients",
+  "info": {
+    "singularName": "client",
+    "pluralName": "clients",
+    "displayName": "Client",
+    "description": "Multi-tenant Clients"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "domain": {
+      "type": "string"
+    },
+    "api_token": {
+      "type": "string",
+      "private": true
+    },
+    "folders": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::folder.folder",
+      "mappedBy": "client"
+    },
+    "pages": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::page.page",
+      "mappedBy": "client"
+    }
+  }
+}

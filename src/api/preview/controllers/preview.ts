@@ -9,6 +9,7 @@
  */
 
 const STRAPI_BASE = process.env.URL || 'http://localhost:1337';
+const META_DESCRIPTION_MAX_LENGTH = 160;
 
 // ── Image URL Helper ─────────────────────────────────────────────────────────
 
@@ -30,6 +31,79 @@ function resolveAllImageUrls(media): string[] {
       return `${STRAPI_BASE}${file.url}`;
     })
     .filter(Boolean);
+}
+
+// ── SEO Helpers ──────────────────────────────────────────────────────────────
+
+function normalizeMetaText(value: unknown): string {
+  if (typeof value !== 'string') return '';
+
+  const withoutTags = value.replace(/<[^>]*>/g, ' ');
+  const decoded = withoutTags
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>');
+
+  return decoded.replace(/\s+/g, ' ').trim();
+}
+
+function truncateMetaText(value: string, maxLength = META_DESCRIPTION_MAX_LENGTH): string {
+  if (value.length <= maxLength) return value;
+
+  const maxWithoutEllipsis = Math.max(maxLength - 3, 1);
+  const sliced = value.slice(0, maxWithoutEllipsis);
+  const lastSpace = sliced.lastIndexOf(' ');
+  const boundary = Math.floor(maxWithoutEllipsis * 0.6);
+  const shortened = lastSpace >= boundary ? sliced.slice(0, lastSpace) : sliced;
+
+  return `${shortened.trimEnd()}...`;
+}
+
+function escapeHtmlAttribute(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function pickFirstTextFromBlocks(blocks, component: string, field: string): string {
+  if (!Array.isArray(blocks)) return '';
+
+  for (const block of blocks) {
+    if (block?.__component !== component) continue;
+    const candidate = normalizeMetaText(block?.[field]);
+    if (candidate) return candidate;
+  }
+
+  return '';
+}
+
+function buildPreviewMetaDescription(page): string {
+  const manualDescription =
+    typeof page?.seo?.meta_description === 'string' ? page.seo.meta_description : '';
+
+  if (manualDescription.trim()) {
+    return manualDescription;
+  }
+
+  const blocks = Array.isArray(page?.blocks) ? page.blocks : [];
+  const orderedCandidates = [
+    pickFirstTextFromBlocks(blocks, 'blocks.text-block', 'content'),
+    pickFirstTextFromBlocks(blocks, 'blocks.hero', 'subtitle'),
+    pickFirstTextFromBlocks(blocks, 'blocks.cta', 'description'),
+    pickFirstTextFromBlocks(blocks, 'blocks.features', 'subtitle'),
+    pickFirstTextFromBlocks(blocks, 'blocks.faq', 'title'),
+    pickFirstTextFromBlocks(blocks, 'blocks.team', 'title'),
+    pickFirstTextFromBlocks(blocks, 'blocks.stats', 'title'),
+    pickFirstTextFromBlocks(blocks, 'blocks.image-grid', 'caption'),
+  ];
+
+  const fallbackSource = orderedCandidates.find(Boolean) || normalizeMetaText(page?.title);
+  return truncateMetaText(fallbackSource || '');
 }
 
 // ── Block Renderers ──────────────────────────────────────────────────────────
@@ -441,6 +515,7 @@ export default {
       : '';
 
     const seoTitle = page.seo?.meta_title || page.title;
+    const seoDescription = buildPreviewMetaDescription(page);
     const theme = page.theme || null;
     const styles = generateStyles(theme);
 
@@ -460,6 +535,7 @@ export default {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${seoTitle} — Preview</title>
+  <meta name="description" content="${escapeHtmlAttribute(seoDescription)}" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="${fontsLink}" rel="stylesheet" />
   <style>${styles}</style>

@@ -5,10 +5,10 @@ export default [
   {
     name: 'strapi::cors',
     config: {
-      // In production, replace '*' with specific frontend domains
-      origin: ['*'],
+      origin: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['*'],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       headers: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
+      keepHeaderOnError: true,
     },
   },
   'strapi::poweredBy',
