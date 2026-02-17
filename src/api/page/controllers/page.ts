@@ -35,6 +35,7 @@ const pagePopulate = {
       favicon: true,
     },
   },
+  categoria: true,
   folder: true,
   blocks: {
     populate: '*',
@@ -285,6 +286,7 @@ export default factories.createCoreController('api::page.page', ({ strapi }) => 
     const navbarId = (originalPage as any).navbar?.documentId ?? null;
     const footerId = (originalPage as any).footer?.documentId ?? null;
     const themeId = (originalPage as any).theme?.documentId ?? null;
+    const categoriaId = (originalPage as any).categoria?.documentId ?? null;
 
     const newPage = await strapi.documents('api::page.page').create({
       data: {
@@ -296,6 +298,7 @@ export default factories.createCoreController('api::page.page', ({ strapi }) => 
         navbar: navbarId,
         footer: footerId,
         theme: themeId,
+        categoria: categoriaId,
       },
       populate: pagePopulate,
     });

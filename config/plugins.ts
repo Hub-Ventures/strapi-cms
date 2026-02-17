@@ -4,6 +4,9 @@ export default () => ({
     config: {
       collectionTypes: [
         'api::page.page',
+        'api::folder.folder',
+        'api::categoria.categoria',
+        'api::client.client',
         'api::navbar.navbar',
         'api::footer.footer',
         'api::theme.theme',

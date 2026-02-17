@@ -1,4 +1,3 @@
-
 export default {
   async beforeCreate(event) {
     await generateApiUrl(event);
@@ -9,140 +8,175 @@ export default {
   },
 };
 
+const BASE_URL = 'http://localhost:1337';
+
+function toRelationTarget(value: any): string | number | null {
+  if (!value) return null;
+
+  if (typeof value === 'string' || typeof value === 'number') {
+    return value;
+  }
+
+  if (typeof value === 'object') {
+    if (value.slug) return null;
+
+    if (Array.isArray(value.set) && value.set.length > 0) {
+      return value.set[0].id ?? value.set[0].documentId ?? null;
+    }
+
+    if (Array.isArray(value.connect) && value.connect.length > 0) {
+      return value.connect[0].id ?? value.connect[0].documentId ?? null;
+    }
+
+    return value.id ?? value.documentId ?? null;
+  }
+
+  return null;
+}
+
+async function resolveClientSlugFromInput(clientInput: any): Promise<string | null> {
+  if (!clientInput) return null;
+  if (typeof clientInput === 'object' && clientInput.slug) return clientInput.slug;
+
+  const targetClientId = toRelationTarget(clientInput);
+  if (!targetClientId) return null;
+
+  try {
+    let client = await strapi.documents('api::client.client').findOne({
+      documentId: targetClientId.toString(),
+    });
+
+    if (!client) {
+      client = await strapi.db.query('api::client.client').findOne({
+        where: { id: targetClientId },
+      });
+    }
+
+    return client?.slug ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveFolderSlugFromInput(folderInput: any): Promise<string | null> {
+  if (!folderInput) return null;
+  if (typeof folderInput === 'object' && folderInput.slug) return folderInput.slug;
+
+  const targetFolderId = toRelationTarget(folderInput);
+  if (!targetFolderId) return null;
+
+  try {
+    let folder = await strapi.documents('api::folder.folder').findOne({
+      documentId: targetFolderId.toString(),
+    });
+
+    if (!folder) {
+      folder = await strapi.db.query('api::folder.folder').findOne({
+        where: { id: targetFolderId },
+      });
+    }
+
+    return folder?.slug ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function resolvePageRowId(where: any): Promise<number | null> {
+  if (typeof where?.id === 'number') return where.id;
+  if (typeof where?.id === 'string' && /^\d+$/.test(where.id)) return Number(where.id);
+
+  if (where?.documentId) {
+    const page = await strapi.db.query('api::page.page').findOne({
+      where: { documentId: where.documentId.toString() },
+      select: ['id'],
+    });
+    return page?.id ?? null;
+  }
+
+  return null;
+}
+
+async function resolveLinkedSlugsByPageId(
+  pageId: number
+): Promise<{ clientSlug: string | null; folderSlug: string | null }> {
+  try {
+    const row = await strapi.db
+      .connection('pages as p')
+      .leftJoin('pages_client_lnk as pcl', 'pcl.page_id', 'p.id')
+      .leftJoin('clients as c', 'c.id', 'pcl.client_id')
+      .leftJoin('pages_folder_lnk as pfl', 'pfl.page_id', 'p.id')
+      .leftJoin('folders as f', 'f.id', 'pfl.folder_id')
+      .where('p.id', pageId)
+      .select('c.slug as clientSlug', 'f.slug as folderSlug')
+      .first();
+
+    return {
+      clientSlug: row?.clientSlug ?? null,
+      folderSlug: row?.folderSlug ?? null,
+    };
+  } catch {
+    return { clientSlug: null, folderSlug: null };
+  }
+}
+
 const generateApiUrl = async (event) => {
   const { data, where } = event.params;
-  
+
   // Basic attributes from payload
   let slug = data.slug;
   let client_id = data.client;
   let folder_id = data.folder;
-  // If update and slug/client missing, or if client is just an ID, we might need full context.
+
+  // If update and slug/client/folder are missing, fetch current persisted values.
   if (where && (!slug || client_id === undefined || folder_id === undefined)) {
-     const targetDocId = where.documentId ?? where.id;
-     let current = null;
+    const targetDocId = where.documentId ?? where.id;
+    let current = null;
 
-     if (targetDocId) {
-         current = await strapi.documents('api::page.page').findOne({
-             documentId: targetDocId.toString(),
-             populate: ['client', 'folder'] 
-         });
-     }
+    if (targetDocId) {
+      current = await strapi.documents('api::page.page').findOne({
+        documentId: targetDocId.toString(),
+        populate: ['client', 'folder'],
+      });
+    }
 
-     if (!current && where.id) {
-         current = await strapi.db.query('api::page.page').findOne({
-             where: { id: where.id },
-             populate: ['client', 'folder'],
-         });
-     }
-     
-     if (current) {
-         console.log(`[Lifecycle] Fetched current doc: id=${current.documentId}, client=${JSON.stringify(current.client)}`); // DEBUG
-         slug = slug || current.slug;
-         // If client was not in payload, use current
-         if (client_id === undefined) {
-             client_id = current.client; 
-         }
-         if (folder_id === undefined) {
-             folder_id = current.folder;
-         }
-     }
+    if (!current && where.id) {
+      current = await strapi.db.query('api::page.page').findOne({
+        where: { id: where.id },
+        populate: ['client', 'folder'],
+      });
+    }
+
+    if (current) {
+      slug = slug || current.slug;
+      if (client_id === undefined) {
+        client_id = current.client;
+      }
+      if (folder_id === undefined) {
+        folder_id = current.folder;
+      }
+    }
   }
 
-  const baseUrl = 'http://localhost:1337'; 
-  let clientSlug = null;
-  let folderSlug = null;
+  let clientSlug = await resolveClientSlugFromInput(client_id);
+  let folderSlug = await resolveFolderSlugFromInput(folder_id);
 
-  if (client_id) {
-      console.log(`[Lifecycle] Resolving client: type=${typeof client_id}, value=`, JSON.stringify(client_id)); // DEBUG
-
-      let targetClientId = null;
-
-      // Handle Object formats (set, connect, or full object)
-      if (typeof client_id === 'object') {
-          if (client_id.slug) {
-              clientSlug = client_id.slug; // Full object
-          } else if (Array.isArray(client_id.set) && client_id.set.length > 0) {
-              targetClientId = client_id.set[0].id || client_id.set[0].documentId;
-          } else if (Array.isArray(client_id.connect) && client_id.connect.length > 0) {
-              targetClientId = client_id.connect[0].id || client_id.connect[0].documentId;
-          } else if (client_id.id || client_id.documentId) {
-              targetClientId = client_id.id || client_id.documentId;
-          }
-      } 
-      // Handle Primitive formats (string ID or int ID)
-      else if (typeof client_id === 'string' || typeof client_id === 'number') {
-          targetClientId = client_id;
-      }
-
-      if (targetClientId && !clientSlug) {
-           try {
-               // Start by looking up by Document ID (common in Strapi 5)
-               let client = await strapi.documents('api::client.client').findOne({
-                   documentId: targetClientId.toString(), 
-               });
-               
-               if (!client) {
-                   // Fallback: look up by integer ID (common in relations)
-                    client = await strapi.db.query('api::client.client').findOne({
-                       where: { id: targetClientId }
-                    });
-               }
-
-               if (client) {
-                   clientSlug = client.slug;
-               }
-           } catch (e) {
-               console.log('[Lifecycle] Error fetching client:', e.message);
-           }
-      }
-  }
-
-  if (folder_id) {
-      let targetFolderId = null;
-
-      if (typeof folder_id === 'object') {
-          if (folder_id.slug) {
-              folderSlug = folder_id.slug;
-          } else if (Array.isArray(folder_id.set) && folder_id.set.length > 0) {
-              targetFolderId = folder_id.set[0].id || folder_id.set[0].documentId;
-          } else if (Array.isArray(folder_id.connect) && folder_id.connect.length > 0) {
-              targetFolderId = folder_id.connect[0].id || folder_id.connect[0].documentId;
-          } else if (folder_id.id || folder_id.documentId) {
-              targetFolderId = folder_id.id || folder_id.documentId;
-          }
-      } else if (typeof folder_id === 'string' || typeof folder_id === 'number') {
-          targetFolderId = folder_id;
-      }
-
-      if (targetFolderId && !folderSlug) {
-          try {
-              let folder = await strapi.documents('api::folder.folder').findOne({
-                  documentId: targetFolderId.toString(),
-              });
-
-              if (!folder) {
-                  folder = await strapi.db.query('api::folder.folder').findOne({
-                      where: { id: targetFolderId },
-                  });
-              }
-
-              if (folder) {
-                  folderSlug = folder.slug;
-              }
-          } catch (e) {
-              console.log('[Lifecycle] Error fetching folder:', e.message);
-          }
-      }
+  // Fallback: when payload/current object is incomplete, read relation links by page row id.
+  const pageRowId = await resolvePageRowId(where);
+  if (pageRowId && (!clientSlug || !folderSlug)) {
+    const linked = await resolveLinkedSlugsByPageId(pageRowId);
+    clientSlug = clientSlug || linked.clientSlug;
+    folderSlug = folderSlug || linked.folderSlug;
   }
 
   if (!slug) {
-      return;
+    return;
   }
 
   const resolvedClientSlug = clientSlug || 'global';
   const apiUrl = folderSlug
-      ? `${baseUrl}/api/${resolvedClientSlug}/${folderSlug}/${slug}`
-      : `${baseUrl}/api/${resolvedClientSlug}/${slug}`;
+    ? `${BASE_URL}/api/${resolvedClientSlug}/${folderSlug}/${slug}`
+    : `${BASE_URL}/api/${resolvedClientSlug}/${slug}`;
 
   event.params.data.api_url = apiUrl;
 };
