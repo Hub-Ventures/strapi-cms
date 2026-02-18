@@ -3,8 +3,103 @@ import type { Core } from '@strapi/strapi';
 const PAGE_CONTENT_MANAGER_KEY =
   'plugin_content_manager_configuration_content_types::api::page.page';
 const PAGE_OPTIONAL_FIELDS = ['navbar', 'footer', 'theme', 'seo'] as const;
+const PAGE_RELATION_LAYOUT_PAIRS = [
+  ['client', 'folder'],
+  ['categoria', 'theme'],
+  ['navbar', 'footer'],
+] as const;
 const ADMIN_CONTENT_EDITOR_ROLE_CODES = ['strapi-editor', 'strapi-author'] as const;
-const ADMIN_ALLOWED_CONTENT_SUBJECTS = new Set(['api::page.page', 'api::folder.folder']);
+const ADMIN_ALLOWED_CONTENT_SUBJECTS = new Set([
+  'api::page.page',
+  'api::folder.folder',
+  'api::categoria.categoria',
+]);
+
+async function ensurePageCategoryFieldInContentManager(strapi: Core.Strapi) {
+  const coreStoreRow = await strapi.db
+    .connection('strapi_core_store_settings')
+    .where({ key: PAGE_CONTENT_MANAGER_KEY })
+    .first();
+
+  if (!coreStoreRow?.value) return;
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(coreStoreRow.value);
+  } catch {
+    return;
+  }
+
+  let changed = false;
+
+  const metadatas = parsed?.metadatas ?? {};
+  const currentCategoriaMetadata = metadatas.categoria ?? {};
+  const nextCategoriaMetadata = {
+    ...currentCategoriaMetadata,
+    edit: {
+      ...(currentCategoriaMetadata.edit ?? {}),
+      label: 'categoria',
+      description: '',
+      placeholder: '',
+      visible: true,
+      editable: true,
+      mainField: 'nombre',
+    },
+    list: {
+      ...(currentCategoriaMetadata.list ?? {}),
+      label: 'categoria',
+      searchable: true,
+      sortable: true,
+    },
+  };
+
+  if (JSON.stringify(currentCategoriaMetadata) !== JSON.stringify(nextCategoriaMetadata)) {
+    parsed.metadatas = {
+      ...metadatas,
+      categoria: nextCategoriaMetadata,
+    };
+    changed = true;
+  }
+
+  const editLayout = parsed?.layouts?.edit;
+  if (Array.isArray(editLayout)) {
+    const hasCategoriaField = editLayout.some(
+      (row: unknown) =>
+        Array.isArray(row) &&
+        row.some((field: any) => typeof field?.name === 'string' && field.name === 'categoria')
+    );
+
+    if (!hasCategoriaField) {
+      const clientFolderRowIndex = editLayout.findIndex(
+        (row: unknown) =>
+          Array.isArray(row) &&
+          row.some((field: any) => field?.name === 'client') &&
+          row.some((field: any) => field?.name === 'folder')
+      );
+
+      const categoriaRow = [{ name: 'categoria', size: 6 }];
+
+      if (clientFolderRowIndex >= 0) {
+        editLayout.splice(clientFolderRowIndex + 1, 0, categoriaRow);
+      } else {
+        editLayout.push(categoriaRow);
+      }
+
+      parsed.layouts.edit = editLayout;
+      changed = true;
+    }
+  }
+
+  if (!changed) return;
+
+  await strapi.db.connection('strapi_core_store_settings').where({ id: coreStoreRow.id }).update({
+    value: JSON.stringify(parsed),
+  });
+
+  strapi.log.info(
+    'Updated Content Manager layout: added page relation field "categoria" with mainField "nombre".'
+  );
+}
 
 async function ensurePageOptionalFieldsAtEnd(strapi: Core.Strapi) {
   const coreStoreRow = await strapi.db
@@ -88,6 +183,89 @@ async function ensurePageOptionalFieldsAtEnd(strapi: Core.Strapi) {
   );
 }
 
+async function ensurePageRelationsGrid(strapi: Core.Strapi) {
+  const coreStoreRow = await strapi.db
+    .connection('strapi_core_store_settings')
+    .where({ key: PAGE_CONTENT_MANAGER_KEY })
+    .first();
+
+  if (!coreStoreRow?.value) return;
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(coreStoreRow.value);
+  } catch {
+    return;
+  }
+
+  const editLayout = parsed?.layouts?.edit;
+  if (!Array.isArray(editLayout) || editLayout.length === 0) return;
+
+  const relationFieldNames = new Set<string>(PAGE_RELATION_LAYOUT_PAIRS.flat());
+  const relationFieldMap = new Map<string, { name: string; size?: number }>();
+
+  const layoutWithoutRelations = editLayout
+    .map((row: unknown) => {
+      if (!Array.isArray(row)) return [];
+
+      return row.filter((field: any) => {
+        const fieldName = field?.name;
+        if (typeof fieldName === 'string' && relationFieldNames.has(fieldName)) {
+          if (!relationFieldMap.has(fieldName)) {
+            relationFieldMap.set(fieldName, field);
+          }
+          return false;
+        }
+
+        return true;
+      });
+    })
+    .filter((row: unknown[]) => row.length > 0);
+
+  if (relationFieldMap.size === 0) return;
+
+  const relationRows = PAGE_RELATION_LAYOUT_PAIRS.map((pair) => {
+    const row: Array<{ name: string; size: number }> = [];
+
+    for (const fieldName of pair) {
+      const existing = relationFieldMap.get(fieldName);
+      if (!existing) continue;
+      row.push({ name: fieldName, size: existing.size ?? 6 });
+    }
+
+    return row;
+  }).filter((row) => row.length > 0);
+
+  if (relationRows.length === 0) return;
+
+  const seoRowIndex = layoutWithoutRelations.findIndex(
+    (row: unknown) =>
+      Array.isArray(row) && row.some((field: any) => typeof field?.name === 'string' && field.name === 'seo')
+  );
+
+  const insertionIndex = seoRowIndex >= 0 ? seoRowIndex : layoutWithoutRelations.length;
+
+  const nextEditLayout = [
+    ...layoutWithoutRelations.slice(0, insertionIndex),
+    ...relationRows,
+    ...layoutWithoutRelations.slice(insertionIndex),
+  ];
+
+  if (JSON.stringify(editLayout) === JSON.stringify(nextEditLayout)) {
+    return;
+  }
+
+  parsed.layouts.edit = nextEditLayout;
+
+  await strapi.db.connection('strapi_core_store_settings').where({ id: coreStoreRow.id }).update({
+    value: JSON.stringify(parsed),
+  });
+
+  strapi.log.info(
+    'Updated Content Manager layout: arranged page relations into a 2-column grid (3 rows).'
+  );
+}
+
 async function ensureAdminMenuPermissionsByRole(strapi: Core.Strapi) {
   const roles = await strapi.db
     .connection('admin_roles')
@@ -143,7 +321,9 @@ export default {
    * run jobs, or perform some special logic.
    */
   async bootstrap({ strapi }: { strapi: Core.Strapi }) {
+    await ensurePageCategoryFieldInContentManager(strapi);
     await ensurePageOptionalFieldsAtEnd(strapi);
+    await ensurePageRelationsGrid(strapi);
     await ensureAdminMenuPermissionsByRole(strapi);
 
     // 1. Enable Permissions for 'authenticated' role
@@ -535,34 +715,67 @@ export default {
 
 
     // 9. MIGRATION: Ensure api_url is set for all pages
-    const allPages = await strapi.db.query('api::page.page').findMany({
-        populate: ['client', 'folder'],
-    });
-    
+    // Resolve relations through link tables to avoid false "global" URLs.
+    const pageRows = await strapi.db
+      .connection('pages as p')
+      .leftJoin('pages_client_lnk as pcl', 'pcl.page_id', 'p.id')
+      .leftJoin('clients as c', 'c.id', 'pcl.client_id')
+      .leftJoin('pages_folder_lnk as pfl', 'pfl.page_id', 'p.id')
+      .leftJoin('folders as f', 'f.id', 'pfl.folder_id')
+      .select(
+        'p.id as id',
+        'p.slug as slug',
+        'c.slug as clientSlug',
+        'f.slug as folderSlug'
+      );
+
+    const pageById = new Map<
+      number,
+      { id: number; slug: string; clientSlug: string | null; folderSlug: string | null }
+    >();
+
+    for (const row of pageRows as Array<{
+      id: number;
+      slug: string;
+      clientSlug?: string | null;
+      folderSlug?: string | null;
+    }>) {
+      const existing = pageById.get(row.id);
+      if (!existing) {
+        pageById.set(row.id, {
+          id: row.id,
+          slug: row.slug || '',
+          clientSlug: row.clientSlug ?? null,
+          folderSlug: row.folderSlug ?? null,
+        });
+        continue;
+      }
+
+      if (!existing.clientSlug && row.clientSlug) {
+        existing.clientSlug = row.clientSlug;
+      }
+      if (!existing.folderSlug && row.folderSlug) {
+        existing.folderSlug = row.folderSlug;
+      }
+    }
+
+    const allPages = Array.from(pageById.values());
+
     console.log(`🔄 Updating api_url for ${allPages.length} pages...`);
     for (const page of allPages) {
-        const p = page as any;
-        const slug = p.slug || '';
-        
-        // Explicitly calculate API URL to ensure migration works even if lifecycle doesn't trigger
-        let clientSlug = 'global';
-        if (p.client && typeof p.client === 'object' && p.client.slug) {
-            clientSlug = p.client.slug;
-        }
+      const slug = page.slug || '';
+      if (!slug) continue;
 
-        let folderSlug = null;
-        if (p.folder && typeof p.folder === 'object' && p.folder.slug) {
-            folderSlug = p.folder.slug;
-        }
+      const clientSlug = page.clientSlug || 'global';
+      const folderSlug = page.folderSlug || null;
 
-        const apiUrl = folderSlug
-            ? `http://localhost:1337/api/${clientSlug}/${folderSlug}/${slug}`
-            : `http://localhost:1337/api/${clientSlug}/${slug}`;
-    
-        await strapi.db.query('api::page.page').update({
-            where: { id: p.id },
-            data: { api_url: apiUrl },
-        });
+      const apiUrl = folderSlug
+        ? `http://localhost:1337/api/${clientSlug}/${folderSlug}/${slug}`
+        : `http://localhost:1337/api/${clientSlug}/${slug}`;
+
+      await strapi.db.connection('pages').where({ id: page.id }).update({
+        api_url: apiUrl,
+      });
     }
 
     // Verify counts

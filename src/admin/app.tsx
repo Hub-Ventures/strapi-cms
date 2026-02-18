@@ -4,7 +4,8 @@ import type { StrapiApp } from '@strapi/strapi/admin';
 const COLLECTION_TYPE_PRIORITY: Record<string, number> = {
   'api::page.page': 0,
   'api::folder.folder': 1,
-  'api::client.client': 2,
+  'api::categoria.categoria': 2,
+  'api::client.client': 3,
 };
 const DEFAULT_COLLECTION_TYPE_UID = 'api::page.page';
 const INITIAL_CM_REDIRECT_KEY = 'elhub.cm.initial-redirect.done';

@@ -56,6 +56,12 @@
       "target": "api::folder.folder",
       "inversedBy": "pages"
     },
+    "categoria": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::categoria.categoria",
+      "inversedBy": "pages"
+    },
     "navbar": {
       "type": "relation",
       "relation": "manyToOne",
