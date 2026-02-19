@@ -8,7 +8,25 @@ const COLLECTION_TYPE_PRIORITY: Record<string, number> = {
   'api::client.client': 3,
 };
 const DEFAULT_COLLECTION_TYPE_UID = 'api::page.page';
+const CLIENT_COLLECTION_TYPE_UID = 'api::client.client';
 const INITIAL_CM_REDIRECT_KEY = 'elhub.cm.initial-redirect.done';
+
+function encodeAdminUidSegment(uid: string): string {
+  return encodeURIComponent(uid);
+}
+
+function decodeAdminUidSegment(uid: string): string {
+  try {
+    return decodeURIComponent(uid);
+  } catch {
+    return uid;
+  }
+}
+
+function samePath(a: string, b: string): boolean {
+  if (a === b) return true;
+  return decodeAdminUidSegment(a) === decodeAdminUidSegment(b);
+}
 
 function extractCollectionTypeUidFromHref(href: string): string | null {
   const marker = '/content-manager/collection-types/';
@@ -17,7 +35,8 @@ function extractCollectionTypeUidFromHref(href: string): string | null {
 
   const tail = href.slice(start + marker.length);
   const uid = tail.split(/[/?#]/)[0];
-  return uid || null;
+  if (!uid) return null;
+  return decodeAdminUidSegment(uid);
 }
 
 function reorderContentManagerCollectionTypes(): void {
@@ -91,15 +110,22 @@ function ensureDefaultContentManagerEntry(): void {
 
   const adminPrefix = currentPath.slice(0, markerIndex);
   const contentManagerRoot = `${adminPrefix}${marker}`;
-  const defaultCollectionPath = `${contentManagerRoot}/collection-types/${DEFAULT_COLLECTION_TYPE_UID}`;
-  const clientCollectionPath = `${contentManagerRoot}/collection-types/api::client.client`;
+  const defaultCollectionPath = `${contentManagerRoot}/collection-types/${encodeAdminUidSegment(DEFAULT_COLLECTION_TYPE_UID)}`;
+  const defaultCollectionPathRaw = `${contentManagerRoot}/collection-types/${DEFAULT_COLLECTION_TYPE_UID}`;
+  const clientCollectionPath = `${contentManagerRoot}/collection-types/${encodeAdminUidSegment(CLIENT_COLLECTION_TYPE_UID)}`;
+  const clientCollectionPathRaw = `${contentManagerRoot}/collection-types/${CLIENT_COLLECTION_TYPE_UID}`;
 
-  if (currentPath === contentManagerRoot && currentPath !== defaultCollectionPath) {
+  if (samePath(currentPath, contentManagerRoot) && !samePath(currentPath, defaultCollectionPath)) {
     window.location.replace(defaultCollectionPath);
     return;
   }
 
-  if (currentPath === clientCollectionPath) {
+  if (samePath(currentPath, defaultCollectionPathRaw) && currentPath !== defaultCollectionPath) {
+    window.location.replace(defaultCollectionPath);
+    return;
+  }
+
+  if (samePath(currentPath, clientCollectionPath) || samePath(currentPath, clientCollectionPathRaw)) {
     const alreadyRedirected = sessionStorage.getItem(INITIAL_CM_REDIRECT_KEY) === '1';
     if (!alreadyRedirected) {
       sessionStorage.setItem(INITIAL_CM_REDIRECT_KEY, '1');
