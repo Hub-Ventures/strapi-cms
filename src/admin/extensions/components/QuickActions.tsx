@@ -3,6 +3,9 @@ import { Box, Typography, Grid, Flex } from '@strapi/design-system';
 import { Pencil, PaintBrush, Image } from '@strapi/icons';
 import { useNavigate } from 'react-router-dom';
 
+const PAGE_UID = encodeURIComponent('api::page.page');
+const THEME_UID = encodeURIComponent('api::theme.theme');
+
 const QuickActions = () => {
   const navigate = useNavigate();
 
@@ -11,7 +14,7 @@ const QuickActions = () => {
       label: 'Crear Nueva Página',
       description: 'Añade una nueva página a tu sitio web.',
       icon: <Pencil />,
-      to: '/content-manager/collection-types/api::page.page/create',
+      to: `/content-manager/collection-types/${PAGE_UID}/create`,
       color: 'primary600'
     },
     {
@@ -26,7 +29,7 @@ const QuickActions = () => {
       description: 'Ajusta colores y tipografía del sitio.',
       icon: <PaintBrush />,
       // Assuming singleton or collection type. If singleton use single-types/api::theme.theme
-      to: '/content-manager/collection-types/api::theme.theme', 
+      to: `/content-manager/collection-types/${THEME_UID}`,
       color: 'alternative600'
     }
   ];

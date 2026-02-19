@@ -15,6 +15,7 @@ export default [
   'strapi::query',
   'strapi::body',
   'strapi::session',
+  'global::admin-uid-redirect',
   'strapi::favicon',
   'strapi::public',
 ];

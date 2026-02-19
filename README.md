@@ -18,6 +18,47 @@ npm run develop
 # 4. Abre http://localhost:1337/admin y crea tu usuario admin
 ```
 
+## Deploy en Plesk (Passenger)
+
+Configuración objetivo:
+
+- Application root: `/cms`
+- Startup file: `app.js`
+- Node.js: `>=20`
+- Base de datos: PostgreSQL (`localhost:5432`)
+
+Pasos:
+
+```bash
+# 1. Instalar dependencias
+npm install
+
+# 2. Configurar variables de entorno de producción
+#    (incluyendo NODE_ENV=production y DATABASE_*)
+
+# 3. Compilar panel admin
+npm run build
+```
+
+Luego, en Plesk:
+
+1. Define el startup file como `app.js`.
+2. No uses `strapi develop` en producción.
+3. Reinicia la app desde Passenger.
+
+`app.js` (startup file):
+
+```js
+const { createStrapi } = require('@strapi/strapi');
+
+async function start() {
+  const app = await createStrapi({ distDir: './dist' });
+  await app.start();
+}
+
+start();
+```
+
 ## Content Types incluidos
 
 ### 🔵 Core (siempre activos)
@@ -82,8 +123,7 @@ export default factories.createCoreRouter('api::mi-tipo.mi-tipo');
 
 ## Base de datos
 
-- **Desarrollo:** SQLite (por defecto, cero configuración)
-- **Producción:** PostgreSQL (configura las variables `DATABASE_*` en `.env`)
+- **Proyecto configurado para PostgreSQL** (configura `DATABASE_*` y `NODE_ENV=production`)
 
 ## Permisos (importante)
 
@@ -123,4 +163,4 @@ Si mejoras algo que beneficia a todos los proyectos:
 
 - [Strapi v5](https://strapi.io/) — Headless CMS
 - TypeScript
-- SQLite (dev) / PostgreSQL (prod)
+- PostgreSQL
