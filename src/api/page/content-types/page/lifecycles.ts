@@ -8,7 +8,15 @@ export default {
   },
 };
 
-const BASE_URL = 'http://localhost:1337';
+function resolvePublicBaseUrl(): string {
+  const fromPublicUrl = process.env.PUBLIC_URL?.trim();
+  if (fromPublicUrl) return fromPublicUrl.replace(/\/+$/, '');
+
+  const fromUrl = process.env.URL?.trim();
+  if (fromUrl) return fromUrl.replace(/\/+$/, '');
+
+  return 'http://localhost:1337';
+}
 
 function toRelationTarget(value: any): string | number | null {
   if (!value) return null;
@@ -173,10 +181,11 @@ const generateApiUrl = async (event) => {
     return;
   }
 
+  const baseUrl = resolvePublicBaseUrl();
   const resolvedClientSlug = clientSlug || 'global';
   const apiUrl = folderSlug
-    ? `${BASE_URL}/api/${resolvedClientSlug}/${folderSlug}/${slug}`
-    : `${BASE_URL}/api/${resolvedClientSlug}/${slug}`;
+    ? `${baseUrl}/api/${resolvedClientSlug}/${folderSlug}/${slug}`
+    : `${baseUrl}/api/${resolvedClientSlug}/${slug}`;
 
   event.params.data.api_url = apiUrl;
 };

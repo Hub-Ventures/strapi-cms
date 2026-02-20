@@ -8,7 +8,9 @@
  * So we populate blocks with '*' and then manually resolve nested media.
  */
 
-const STRAPI_BASE = process.env.URL || 'http://localhost:1337';
+const STRAPI_BASE = (process.env.PUBLIC_URL || process.env.URL || 'http://localhost:1337')
+  .trim()
+  .replace(/\/+$/, '');
 const META_DESCRIPTION_MAX_LENGTH = 160;
 
 // ── Image URL Helper ─────────────────────────────────────────────────────────

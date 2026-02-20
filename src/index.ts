@@ -15,6 +15,16 @@ const ADMIN_ALLOWED_CONTENT_SUBJECTS = new Set([
   'api::categoria.categoria',
 ]);
 
+function resolvePublicBaseUrl(): string {
+  const fromPublicUrl = process.env.PUBLIC_URL?.trim();
+  if (fromPublicUrl) return fromPublicUrl.replace(/\/+$/, '');
+
+  const fromUrl = process.env.URL?.trim();
+  if (fromUrl) return fromUrl.replace(/\/+$/, '');
+
+  return 'http://localhost:1337';
+}
+
 async function ensurePageCategoryFieldInContentManager(strapi: Core.Strapi) {
   const coreStoreRow = await strapi.db
     .connection('strapi_core_store_settings')
@@ -321,6 +331,8 @@ export default {
    * run jobs, or perform some special logic.
    */
   async bootstrap({ strapi }: { strapi: Core.Strapi }) {
+    const publicBaseUrl = resolvePublicBaseUrl();
+
     await ensurePageCategoryFieldInContentManager(strapi);
     await ensurePageOptionalFieldsAtEnd(strapi);
     await ensurePageRelationsGrid(strapi);
@@ -699,7 +711,7 @@ export default {
                     cta_url: '#'
                   }
                 ],
-                api_url: 'http://localhost:1337/api/global/home' 
+                api_url: `${publicBaseUrl}/api/global/home`
               },
               status: 'published'
            });
@@ -770,8 +782,8 @@ export default {
       const folderSlug = page.folderSlug || null;
 
       const apiUrl = folderSlug
-        ? `http://localhost:1337/api/${clientSlug}/${folderSlug}/${slug}`
-        : `http://localhost:1337/api/${clientSlug}/${slug}`;
+        ? `${publicBaseUrl}/api/${clientSlug}/${folderSlug}/${slug}`
+        : `${publicBaseUrl}/api/${clientSlug}/${slug}`;
 
       await strapi.db.connection('pages').where({ id: page.id }).update({
         api_url: apiUrl,
