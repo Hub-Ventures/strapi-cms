@@ -1,8 +1,8 @@
 export default ({ env }) => ({
   host: env('HOST', '0.0.0.0'),
-  port: env.int('PORT', 3000),
-  url: 'https://cms.sandiego.com.co',
-  proxy: true,
+  port: env.int('PORT', 1337),
+  url: env('URL', ''),
+  proxy: env.bool('PROXY', true),
   app: {
     keys: env.array('APP_KEYS'),
   },

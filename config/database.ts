@@ -1,9 +1,9 @@
-module.exports = ({ env }) => ({
+export default ({ env }) => ({
   connection: {
-    client: env('DATABASE_CLIENT', 'mysql'),
+    client: env('DATABASE_CLIENT', 'postgres'),
     connection: {
       host: env('DATABASE_HOST', 'localhost'),
-      port: env.int('DATABASE_PORT', 3306),
+      port: env.int('DATABASE_PORT', 5432),
       database: env('DATABASE_NAME'),
       user: env('DATABASE_USERNAME'),
       password: env('DATABASE_PASSWORD'),

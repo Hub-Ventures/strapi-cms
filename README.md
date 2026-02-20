@@ -2,6 +2,16 @@
 
 Plantilla reutilizable de CMS basada en **Strapi v5**. Fork este repo para crear el CMS de cualquier proyecto web.
 
+## Relación con upstream
+
+Este repo es una **aplicación Strapi** (template de proyecto). El upstream de referencia para convenciones de despliegue y scripts es [Hub-Ventures/strapi](https://github.com/Hub-Ventures/strapi/tree/develop) (fork del core de Strapi). Este proyecto mantiene alineado:
+
+- **Scripts**: `build`, `develop`, `start`, `deploy` — mismos que en `examples/empty` del upstream.
+- **Producción**: `npm run build` → arranque con `node app.js` o `strapi start`; nunca `strapi develop` en producción.
+- **Variables de entorno**: `NODE_ENV`, `HOST`, `PORT`, `URL`, `APP_KEYS`, `DATABASE_*` — mismas que en la documentación y ejemplos del core.
+- **Base de datos**: Por defecto PostgreSQL (puerto 5432); opcionalmente MySQL vía `DATABASE_CLIENT=mysql`.
+- **Docker**: `docker-compose.dev.yml` ofrece Postgres y MySQL para desarrollo local, alineado con el upstream.
+
 ## Inicio rápido
 
 ```bash
@@ -18,39 +28,53 @@ npm run develop
 # 4. Abre http://localhost:1337/admin y crea tu usuario admin
 ```
 
-## Deploy en Plesk (Passenger)
+## Despliegue (alineado con upstream)
 
-Configuración objetivo:
+Flujo estándar en producción (igual que en el core y ejemplos):
 
-- Application root: `/cms`
+1. **Build**: `npm run build` (genera `dist/`).
+2. **Arranque**: `npm run start` (`strapi start`) o **startup file** `app.js` para entornos que exigen un archivo de entrada (p. ej. Plesk/Passenger).
+
+No usar `strapi develop` en producción.
+
+### Opción A: Plesk (Passenger)
+
+- Application root: p. ej. `/cms`
 - Startup file: `app.js`
 - Node.js: `>=20`
-- Base de datos: PostgreSQL (`localhost:5432`)
-
-Pasos:
+- Base de datos: PostgreSQL (puerto 5432)
 
 ```bash
-# 1. Instalar dependencias
 npm install
-
-# 2. Configurar variables de entorno de producción
-#    (incluyendo NODE_ENV=production, URL y DATABASE_*)
-
-# 3. Compilar panel admin
+# Configura .env con NODE_ENV=production, URL, DATABASE_*, APP_KEYS, etc.
 npm run build
 ```
 
-Luego, en Plesk:
+En Plesk: define el startup file como `app.js` y reinicia la app.
 
-1. Define el startup file como `app.js`.
-2. No uses `strapi develop` en producción.
-3. Reinicia la app desde Passenger.
+### Opción B: Servidor genérico (PM2, systemd, etc.)
 
-Variables mínimas recomendadas en producción:
+```bash
+npm install
+npm run build
+npm run start
+# o: node app.js
+```
+
+### Variables de entorno en producción
 
 ```env
 NODE_ENV=production
+HOST=0.0.0.0
+PORT=1337
 URL=https://cms.tu-dominio.com
+APP_KEYS=key1,key2
+API_TOKEN_SALT=...
+ADMIN_JWT_SECRET=...
+TRANSFER_TOKEN_SALT=...
+JWT_SECRET=...
+ENCRYPTION_KEY=...
+DATABASE_CLIENT=postgres
 DATABASE_HOST=localhost
 DATABASE_PORT=5432
 DATABASE_NAME=tu_bd
@@ -58,18 +82,7 @@ DATABASE_USERNAME=tu_usuario
 DATABASE_PASSWORD=tu_password
 ```
 
-`app.js` (startup file):
-
-```js
-const { createStrapi } = require('@strapi/strapi');
-
-async function start() {
-  const app = await createStrapi({ distDir: './dist' });
-  await app.start();
-}
-
-start();
-```
+El `app.js` del repo ya está configurado (`distDir: ./dist`, `appDir: __dirname`); no hace falta sustituirlo.
 
 ## Content Types incluidos
 
@@ -135,7 +148,9 @@ export default factories.createCoreRouter('api::mi-tipo.mi-tipo');
 
 ## Base de datos
 
-- **Proyecto configurado para PostgreSQL** (configura `DATABASE_*` y `NODE_ENV=production`)
+- **Por defecto: PostgreSQL** (puerto 5432). Configura `DATABASE_*` y `NODE_ENV=production`.
+- Para desarrollo local con Docker (como en el upstream): `docker compose -f docker-compose.dev.yml up -d` y usa en `.env`: `DATABASE_CLIENT=postgres`, `DATABASE_HOST=localhost`, `DATABASE_PORT=5432`, `DATABASE_NAME=strapi`, `DATABASE_USERNAME=strapi`, `DATABASE_PASSWORD=strapi`.
+- Para MySQL: `DATABASE_CLIENT=mysql`, puerto `3306`.
 
 ## Permisos (importante)
 
