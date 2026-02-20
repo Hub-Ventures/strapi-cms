@@ -34,7 +34,7 @@ Pasos:
 npm install
 
 # 2. Configurar variables de entorno de producción
-#    (incluyendo NODE_ENV=production y DATABASE_*)
+#    (incluyendo NODE_ENV=production, URL y DATABASE_*)
 
 # 3. Compilar panel admin
 npm run build
@@ -45,6 +45,18 @@ Luego, en Plesk:
 1. Define el startup file como `app.js`.
 2. No uses `strapi develop` en producción.
 3. Reinicia la app desde Passenger.
+
+Variables mínimas recomendadas en producción:
+
+```env
+NODE_ENV=production
+URL=https://cms.tu-dominio.com
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_NAME=tu_bd
+DATABASE_USERNAME=tu_usuario
+DATABASE_PASSWORD=tu_password
+```
 
 `app.js` (startup file):
 

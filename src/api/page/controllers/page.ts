@@ -43,6 +43,9 @@ const pagePopulate = {
 };
 
 function resolveBaseUrl(ctx: any): string {
+  const explicitPublic = process.env.PUBLIC_URL?.trim();
+  if (explicitPublic) return explicitPublic.replace(/\/+$/, '');
+
   const configured = process.env.URL?.trim();
   if (configured) return configured.replace(/\/+$/, '');
 
