@@ -1,5 +1,5 @@
 # Compose para Dokploy: solo Strapi. Postgres es un servicio externo en Dokploy.
-# Configura DATABASE_HOST, DATABASE_PORT, DATABASE_NAME, etc. en Environment de Dokploy.
+# Las variables se definen en Dokploy (Environment) y se inyectan vía ${VAR}.
 
 services:
   strapi:
@@ -11,6 +11,17 @@ services:
     environment:
       NODE_ENV: production
       HOST: 0.0.0.0
-      PORT: 1337
-      # URL, APP_KEYS, DATABASE_* etc. se definen en Dokploy (Environment)
-      # apuntando a tu instancia Postgres externa
+      PORT: ${PORT:-1337}
+      URL: ${URL}
+      APP_KEYS: ${APP_KEYS}
+      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
+      API_TOKEN_SALT: ${API_TOKEN_SALT}
+      TRANSFER_TOKEN_SALT: ${TRANSFER_TOKEN_SALT}
+      JWT_SECRET: ${JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      DATABASE_CLIENT: ${DATABASE_CLIENT:-postgres}
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}

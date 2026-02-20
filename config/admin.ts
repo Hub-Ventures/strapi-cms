@@ -37,7 +37,7 @@ export default ({ env }) => ({
     config: {
       allowedOrigins: env('CLIENT_URL'),
       async handler(uid, { documentId, locale, status }) {
-        const document = await strapi.documents(uid).findOne({ documentId });
+        const document = await globalThis?.strapi?.documents(uid)?.findOne({ documentId });
         const pathname = getPreviewPathname(uid, { document });
 
         if (!pathname) {
@@ -46,7 +46,7 @@ export default ({ env }) => ({
 
         const clientUrl = env('CLIENT_URL');
         const previewSecret = env('PREVIEW_SECRET');
-        const params = new URLSearchParams({
+        const params = new (globalThis as any).URLSearchParams({
           url: pathname,
           secret: previewSecret,
           status,
