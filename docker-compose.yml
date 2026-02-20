@@ -27,7 +27,7 @@ services:
         condition: service_healthy
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18
     restart: unless-stopped
     environment:
       # Definibles en Dokploy (.env / Environment); defaults por si no se setean
