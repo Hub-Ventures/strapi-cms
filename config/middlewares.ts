@@ -14,7 +14,14 @@ export default [
   'strapi::poweredBy',
   'strapi::query',
   'strapi::body',
-  'strapi::session',
+  {
+    name: 'strapi::session',
+    config: {
+      secure: true,
+      httpOnly: true,
+      sameSite: 'lax',
+    },
+  },
   'global::admin-uid-redirect',
   'strapi::favicon',
   'strapi::public',

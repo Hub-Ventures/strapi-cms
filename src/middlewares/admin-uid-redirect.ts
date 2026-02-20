@@ -30,10 +30,13 @@ export default () => {
     if (shouldEncodeCollectionType || shouldEncodeSingleType) {
       const prefix = shouldEncodeCollectionType ? COLLECTION_TYPES_PREFIX : SINGLE_TYPES_PREFIX;
       const encodedPath = encodeFirstSegment(path, prefix);
-      const queryString = ctx.querystring ? `?${ctx.querystring}` : '';
-      ctx.status = 301;
-      ctx.redirect(`${encodedPath}${queryString}`);
-      return;
+
+      // Internal rewrite avoids browser redirect loops behind reverse proxies
+      // that decode `%3A%3A` back to `::` before forwarding.
+      if (encodedPath !== path) {
+        const queryString = ctx.querystring ? `?${ctx.querystring}` : '';
+        ctx.url = `${encodedPath}${queryString}`;
+      }
     }
 
     await next();
