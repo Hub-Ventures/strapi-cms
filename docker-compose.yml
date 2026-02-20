@@ -1,0 +1,46 @@
+# Compose para Dokploy: dominio se asigna al servicio "strapi"
+# Uso: en Dokploy, apuntar este compose y asignar cms.yampi.ai al servicio strapi
+
+services:
+  strapi:
+    build: .
+    image: strapi-cms:latest
+    restart: unless-stopped
+    ports:
+      - "1337:1337"
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 1337
+      # Definir en Dokploy (Environment) o aquí:
+      # URL: https://cms.yampi.ai
+      # APP_KEYS: ...
+      # DATABASE_CLIENT: postgres
+      # DATABASE_HOST: postgres
+      # DATABASE_PORT: 5432
+      # DATABASE_NAME: strapi
+      # DATABASE_USERNAME: strapi
+      # DATABASE_PASSWORD: strapi
+    # Variables: configurar en Dokploy (Environment) o crear .env en el servidor
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      # Definibles en Dokploy (.env / Environment); defaults por si no se setean
+      POSTGRES_USER: ${DATABASE_USERNAME:-strapi}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-strapi}
+      POSTGRES_DB: ${DATABASE_NAME:-strapi}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

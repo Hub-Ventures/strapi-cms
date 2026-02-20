@@ -61,6 +61,17 @@ npm run start
 # o: node app.js
 ```
 
+### Opción C: Dokploy (Railpack)
+
+El repo incluye `railpack.json` para que Dokploy use **Railpack** como build type sin configuración extra. Railpack ejecutará `npm install`, `npm run build` y arrancará con `node app.js`.
+
+1. En Dokploy: **Nueva Application** → conectar el repo.
+2. **Build Type**: elegir **Railpack** (no Nixpacks ni Dockerfile).
+3. **Puerto**: en la aplicación, el puerto expuesto debe ser **1337** (o la variable `PORT` que uses).
+4. Añadir en **Environment Variables** todas las variables de producción (ver abajo); la base de datos debe ser accesible desde el contenedor (PostgreSQL/MySQL en otro servicio o externo).
+
+Ver [DOKPLOY.md](./DOKPLOY.md) para pasos detallados y variables.
+
 ### Variables de entorno en producción
 
 ```env
